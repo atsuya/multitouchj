@@ -1,0 +1,71 @@
+<project name="Simplicity" default="compile" basedir=".">
+	<description>
+		Simplicity build configuration
+	</description>
+	<property name="src" location="Source"/>
+	<property name="lib" location="Library"/>
+	<property name="build" location="Build"/>
+	<property name="dist" location="Distribution"/>
+	<property name="jar" value="MultiTouchJ.jar"/>
+
+
+	<target name="init">
+		<echo>Running on Java VM ${ant.java.version}</echo>
+		<!-- Create the time stamp -->
+		<tstamp/>
+		<!-- Create the build directory structure used by compile -->
+		<mkdir dir="${build}"/>
+	</target>
+
+
+	<target name="compile" depends="init" description="compile all source code">
+		<javac srcdir="${src}" destdir="${build}">
+			<!--
+				enable this if you want to check type in containers such as
+				LinkedList, Vector, and etc...
+			-->
+			<!--<compilerarg value="-Xlint:unchecked"/>-->
+			<include name="**/*.java" />
+			<!--<exclude name="**/test/**/*" />-->
+
+			<classpath>
+				<fileset dir="${lib}">
+					<include name="*.jar"/>
+				</fileset>
+				<dirset dir="${src}">
+					<include name="**/*"/>
+					<!--<exclude name="**/test/**/*" />-->
+				</dirset>
+			</classpath>
+		</javac>
+		<copy todir="${build}">
+		    <fileset dir="${src}">
+                <include name="**/resource/*" />
+            </fileset>
+        </copy>
+
+	</target>
+	
+	
+	<target name="jar" depends="compile" description="jar up all class files">
+		<mkdir dir="${dist}"/>
+		<!-- core -->
+		<jar destfile="${dist}/${jar}"
+			basedir="${build}"
+		/>
+	</target>
+
+
+	<target name="clean" description="clean up">
+		<delete dir="${build}"/>
+		<delete dir="${dist}"/>
+		<!--
+		<delete>
+			<fileset dir="${src_root}">
+				<include name="**/*.class"/>
+				<exclude name="**/test/**/*" />
+			</fileset>
+		</delete>
+		-->
+	</target>
+</project>
