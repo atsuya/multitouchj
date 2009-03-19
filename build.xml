@@ -1,11 +1,11 @@
-<project name="Simplicity" default="compile" basedir=".">
+<project name="MultiTouchJ" default="compile" basedir=".">
 	<description>
-		Simplicity build configuration
+		MultiTouchJ build configuration
 	</description>
 	<property name="src" location="Source"/>
-	<property name="lib" location="Library"/>
-	<property name="build" location="Build"/>
-	<property name="dist" location="Distribution"/>
+	<property name="lib" location="../Library"/>
+	<property name="build" location="../Build"/>
+	<property name="dist" location="../Distribution"/>
 	<property name="jar" value="MultiTouchJ.jar"/>
 
 

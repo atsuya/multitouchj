@@ -78,7 +78,7 @@ public class Whiteboard implements WindowManagerCalibratorListener {
     public void run(Map<String, String> parameters) {
         DisplayManager.create();
         DisplayManager displayManager = DisplayManager.getInstance();
-        ObjectObserver objectObserver = new ObjectObserverMoteJ();
+        ObjectObserver objectObserver = new ObjectObserverMouse();
         WindowManager windowManager = null;
 
         try {
