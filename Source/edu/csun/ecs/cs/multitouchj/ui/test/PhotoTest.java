@@ -49,15 +49,17 @@ import edu.csun.ecs.cs.multitouchj.utility.FrameMeter;
  * $Id: PhotoTest.java 80 2009-03-15 07:21:37Z Atsuya Takagi $
  */
 public class PhotoTest implements WindowManagerCalibratorListener {
-    private static final String IMAGE_DIRECTORY = "Resources/PhotoTest";
+    private static final String IMAGE_DIRECTORY = "../Resources/PhotoTest";
     private static Log log = LogFactory.getLog(PhotoTest.class);
     private boolean isRunning;
     private boolean isCalibrated;
     private boolean calibrationRequested;
     private DisplayMode displayMode;
+    private LinkedList<FramedControl> framedControls;
     
     
     public PhotoTest() {
+        framedControls = new LinkedList<FramedControl>();
     }
     
     /* (non-Javadoc)
@@ -108,16 +110,21 @@ public class PhotoTest implements WindowManagerCalibratorListener {
                 }
                 
                 while(Keyboard.next()) {
-                    if(Keyboard.getEventKey() == Keyboard.KEY_F) {
-                        if(Keyboard.getEventKeyState()) {
-                            displayManager.setFullScreen(!displayManager.isFullScreen());
-                        }
-                    }
-                    if(Keyboard.getEventKey() == Keyboard.KEY_ESCAPE) {
-                        isRunning = false;
-                    }
-                    if(Keyboard.getEventKey() == Keyboard.KEY_C) {
-                        calibrationRequested = true;
+                    switch(Keyboard.getEventKey()) {
+                        case Keyboard.KEY_F:
+                            if(Keyboard.getEventKeyState()) {
+                                displayManager.setFullScreen(!displayManager.isFullScreen());
+                            }
+                            break;
+                        case Keyboard.KEY_ESCAPE:
+                            isRunning = false;
+                            break;
+                        case Keyboard.KEY_C:
+                            calibrationRequested = true;
+                            break;
+                        case Keyboard.KEY_I:
+                            resetPhotos();
+                            break;
                     }
                 }
                 
@@ -178,7 +185,19 @@ public class PhotoTest implements WindowManagerCalibratorListener {
                 
                 panel.setRotation(60.0f);
                 panel.setMargin(10.0f);
+                
+                framedControls.add(panel);
             }
+        }
+    }
+    
+    private void resetPhotos() {
+        for(FramedControl framedControl : framedControls) {
+            framedControl.setPosition(new Point(
+                (displayMode.getWidth() / 2.0f),
+                (displayMode.getHeight() / 2.0f)
+            ));
+            framedControl.setRotation(0.0f);
         }
     }
     
