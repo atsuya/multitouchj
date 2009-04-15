@@ -68,11 +68,23 @@ public class InteractiveCanvas extends Canvas {
     }
     
     public void addPen(int id, Pen pen) {
-        pens.put(id, pen);
+        setPen(id, pen);
     }
     
     public void removePen(int id) {
         pens.remove(id);
+    }
+    
+    public Pen getPen(int id) {
+        return pens.get(id);
+    }
+    
+    public Map<Integer, Pen> getPens() {
+        return new Hashtable<Integer, Pen>(pens);
+    }
+    
+    public void setPen(int id, Pen pen) {
+        pens.put(id, pen);
     }
     
     public void render() {

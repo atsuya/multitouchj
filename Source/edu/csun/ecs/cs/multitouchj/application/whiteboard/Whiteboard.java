@@ -39,6 +39,7 @@ import edu.csun.ecs.cs.multitouchj.objectobserver.motej.ObjectObserverMoteJ;
 import edu.csun.ecs.cs.multitouchj.objectobserver.mouse.ObjectObserverMouse;
 import edu.csun.ecs.cs.multitouchj.ui.control.Canvas;
 import edu.csun.ecs.cs.multitouchj.ui.control.FramedControl;
+import edu.csun.ecs.cs.multitouchj.ui.control.TexturedControl;
 import edu.csun.ecs.cs.multitouchj.ui.event.WindowManagerCalibratorEvent;
 import edu.csun.ecs.cs.multitouchj.ui.event.WindowManagerCalibratorListener;
 import edu.csun.ecs.cs.multitouchj.ui.geometry.Point;
@@ -55,10 +56,17 @@ import edu.csun.ecs.cs.multitouchj.utility.FrameMeter;
  */
 public class Whiteboard implements WindowManagerCalibratorListener {
     private static Log log = LogFactory.getLog(Whiteboard.class);
-    private static final Object[][] PENS = {
-        {0, new BasicStroke(5.0f), Color.BLUE},
-        {1, new BasicStroke(5.0f), Color.ORANGE}
+    private static final String[] IMAGE_URLS = {
+        "/edu/csun/ecs/cs/multitouchj/application/whiteboard/resource/Button-Off-Red.png",
+        "/edu/csun/ecs/cs/multitouchj/application/whiteboard/resource/Button-Off-Orange.png",
+        "/edu/csun/ecs/cs/multitouchj/application/whiteboard/resource/Button-Off-Yellow.png",
+        "/edu/csun/ecs/cs/multitouchj/application/whiteboard/resource/Button-Off-Green.png",
+        "/edu/csun/ecs/cs/multitouchj/application/whiteboard/resource/Button-Off-Blue.png",
+        "/edu/csun/ecs/cs/multitouchj/application/whiteboard/resource/Button-Off-Indigo.png",
+        "/edu/csun/ecs/cs/multitouchj/application/whiteboard/resource/Button-Off-Violet.png",
     };
+    private static final int NUMBER_OF_PENS = 4;
+    private static final Color DEFAULT_COLOR = Color.BLACK;
     private boolean isRunning;
     private boolean isCalibrated;
     private boolean calibrationRequested;
@@ -156,12 +164,39 @@ public class Whiteboard implements WindowManagerCalibratorListener {
         interactiveCanvas.setSize(new Size(displayMode.getWidth(), displayMode.getHeight()));
         interactiveCanvas.setTopLeftPosition(new Point(0.0f, 0.0f));
         
-        for(Object[] parameters : PENS) {
+        // pens
+        for(int i = 0; i < NUMBER_OF_PENS; i++) {
             Pen pen = new Pen();
-            pen.setStroke((Stroke)parameters[1]);
-            pen.setPaint((Paint)parameters[2]);
+            pen.setStroke(new BasicStroke(5.0f));
+            pen.setPaint(DEFAULT_COLOR);
             
-            interactiveCanvas.addPen((Integer)parameters[0], pen);
+            interactiveCanvas.addPen(i, pen);
+        }
+        
+        // debug
+        interactiveCanvas.setVisible(false);
+        
+        // buttons
+        int totalButtonsWidth = 0;
+        LinkedList<TexturedControl> buttons = new LinkedList<TexturedControl>();
+        for(String imageUrl : IMAGE_URLS) {
+            TexturedControl texturedControl = new TexturedControl();
+            texturedControl.setTexture(getClass().getResource(imageUrl));
+            buttons.add(texturedControl);
+            
+            totalButtonsWidth += texturedControl.getSize().getWidth();
+        }
+        
+        int numberOfPaddings = IMAGE_URLS.length + 1;
+        int padding = (int)Math.floor(
+            ((displayMode.getWidth() - totalButtonsWidth) / (double)numberOfPaddings)
+        );
+        for(int i = 0; i < buttons.size(); i++) {
+            TexturedControl texturedControl = buttons.get(i);
+            texturedControl.setTopLeftPosition(new Point(
+                (((i + 1) * padding) + (i * texturedControl.getSize().getWidth())),
+                15
+            ));
         }
     }
     
