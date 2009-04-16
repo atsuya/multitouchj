@@ -13,17 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License. 
  */
-package edu.csun.ecs.cs.multitouchj.application.whiteboard;
+package edu.csun.ecs.cs.multitouchj.application.chopsticks;
 
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Paint;
-import java.awt.Stroke;
-import java.io.File;
-import java.net.URL;
 import java.util.LinkedList;
 import java.util.Map;
-import java.util.Random;
 import java.util.TreeMap;
 
 import org.apache.commons.logging.Log;
@@ -32,16 +25,10 @@ import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.DisplayMode;
 
-import edu.csun.ecs.cs.multitouchj.application.whiteboard.ui.InteractiveCanvas;
-import edu.csun.ecs.cs.multitouchj.application.whiteboard.ui.Pen;
+import edu.csun.ecs.cs.multitouchj.application.chopsticks.ui.GrabbableControl;
 import edu.csun.ecs.cs.multitouchj.objectobserver.ObjectObserver;
 import edu.csun.ecs.cs.multitouchj.objectobserver.motej.ObjectObserverMoteJ;
 import edu.csun.ecs.cs.multitouchj.objectobserver.mouse.ObjectObserverMouse;
-import edu.csun.ecs.cs.multitouchj.ui.control.Canvas;
-import edu.csun.ecs.cs.multitouchj.ui.control.FramedControl;
-import edu.csun.ecs.cs.multitouchj.ui.control.TexturedControl;
-import edu.csun.ecs.cs.multitouchj.ui.event.TouchEvent;
-import edu.csun.ecs.cs.multitouchj.ui.event.TouchListener;
 import edu.csun.ecs.cs.multitouchj.ui.event.WindowManagerCalibratorEvent;
 import edu.csun.ecs.cs.multitouchj.ui.event.WindowManagerCalibratorListener;
 import edu.csun.ecs.cs.multitouchj.ui.geometry.Point;
@@ -54,57 +41,20 @@ import edu.csun.ecs.cs.multitouchj.utility.FrameMeter;
 /**
  * @author Atsuya Takagi
  *
- * $Id: Whiteboard.java 85 2009-03-16 07:04:24Z Atsuya Takagi $
+ * $Id$
  */
-public class Whiteboard implements WindowManagerCalibratorListener {
-    private static Log log = LogFactory.getLog(Whiteboard.class);
-    private static final Object[][] BUTTONS = {
-        {
-            "/edu/csun/ecs/cs/multitouchj/application/whiteboard/resource/Button-Off-Red.png",
-            new BasicStroke(5.0f),
-            Color.RED
-        },
-        {
-            "/edu/csun/ecs/cs/multitouchj/application/whiteboard/resource/Button-Off-Orange.png",
-            new BasicStroke(5.0f),
-            Color.ORANGE
-        },
-        {
-            "/edu/csun/ecs/cs/multitouchj/application/whiteboard/resource/Button-Off-Yellow.png",
-            new BasicStroke(5.0f),
-            Color.YELLOW
-        },
-        {
-            "/edu/csun/ecs/cs/multitouchj/application/whiteboard/resource/Button-Off-Green.png",
-            new BasicStroke(5.0f),
-            Color.GREEN
-        },
-        {
-            "/edu/csun/ecs/cs/multitouchj/application/whiteboard/resource/Button-Off-Blue.png",
-            new BasicStroke(5.0f),
-            Color.BLUE
-        },
-        {
-            "/edu/csun/ecs/cs/multitouchj/application/whiteboard/resource/Button-Off-Indigo.png",
-            new BasicStroke(5.0f),
-            new Color(75, 0, 130)
-        },
-        {
-            "/edu/csun/ecs/cs/multitouchj/application/whiteboard/resource/Button-Off-Violet.png",
-            new BasicStroke(5.0f),
-            new Color(238, 130, 238)
-        }
-    };
-    private static final int NUMBER_OF_PENS = 4;
-    private static final Color DEFAULT_COLOR = Color.BLACK;
+public class Chopsticks implements WindowManagerCalibratorListener {
+    private static Log log = LogFactory.getLog(Chopsticks.class);
+    private static final int NUMBER_OF_CONTROLS = 1;
     private boolean isRunning;
     private boolean isCalibrated;
     private boolean calibrationRequested;
     private DisplayMode displayMode;
-    private InteractiveCanvas interactiveCanvas;
+    private LinkedList<GrabbableControl> grabbableControls;
     
     
-    public Whiteboard() {
+    public Chopsticks() {
+        grabbableControls = new LinkedList<GrabbableControl>();
     }
     
     /* (non-Javadoc)
@@ -172,6 +122,7 @@ public class Whiteboard implements WindowManagerCalibratorListener {
                 if(frameMeter.update()) {
                     displayManager.setWindowTitle(frameMeter.getFps()+" fps");
                 }
+                updateControls();
                 windowManager.update();
                 Thread.sleep(30);
             }
@@ -191,61 +142,21 @@ public class Whiteboard implements WindowManagerCalibratorListener {
     }
     
     private void loadImages() throws Exception {
-        interactiveCanvas = new InteractiveCanvas();
-        WindowManager.getInstance().setBackgroundControl(interactiveCanvas);
-        interactiveCanvas.setSize(new Size(displayMode.getWidth(), displayMode.getHeight()));
-        interactiveCanvas.setTopLeftPosition(new Point(0.0f, 0.0f));
-        
-        // pens
-        updatePens(new BasicStroke(5.0f), Color.BLACK);
-        
-        // buttons
-        int totalButtonsWidth = 0;
-        LinkedList<TexturedControl> buttons = new LinkedList<TexturedControl>();
-        for(Object[] button : BUTTONS) {
-            final Stroke stroke = (Stroke)button[1];
-            final Color color = (Color)button[2];
-            
-            TexturedControl texturedControl = new TexturedControl();
-            texturedControl.setTexture(getClass().getResource((String)button[0]));
-            texturedControl.addTouchListener(new TouchListener(){
-                public void touchEnded(TouchEvent touchEvent) {
-                }
-
-                public void touchMoved(TouchEvent touchEvent) {
-                }
-
-                public void touchStarted(TouchEvent touchEvent) {
-                    updatePens(stroke, color);
-                }
-            });
-            buttons.add(texturedControl);
-            
-            totalButtonsWidth += texturedControl.getSize().getWidth();
-        }
-        
-        int numberOfPaddings = BUTTONS.length + 1;
-        int padding = (int)Math.floor(
-            ((displayMode.getWidth() - totalButtonsWidth) / (double)numberOfPaddings)
-        );
-        for(int i = 0; i < buttons.size(); i++) {
-            TexturedControl texturedControl = buttons.get(i);
-            texturedControl.setTopLeftPosition(new Point(
-                (((i + 1) * padding) + (i * texturedControl.getSize().getWidth())),
-                15
-            ));
+        for(int i = 0; i < NUMBER_OF_CONTROLS; i++) {
+            GrabbableControl grabbableControl = new GrabbableControl();
+            grabbableControl.setSize(new Size(100.0f, 100.0f));
+            grabbableControl.setPosition(new Point(100.0f, 0.0f));
+            grabbableControls.add(grabbableControl);
         }
     }
     
-    private void updatePens(Stroke stroke, Color color) {
-        log.debug("updatePends");
-        
-        for(int i = 0; i < NUMBER_OF_PENS; i++) {
-            Pen pen = new Pen();
-            pen.setStroke(stroke);
-            pen.setPaint(color);
-            
-            interactiveCanvas.setPen(i, pen);
+    private void updateControls() {
+        for(GrabbableControl grabbableControl : grabbableControls) {
+            if(!grabbableControl.isGrabbed()) {
+                Point position = grabbableControl.getPosition();
+                position.add(0.0f, 0.1f);
+                grabbableControl.setPosition(position);
+            }
         }
     }
     
@@ -263,7 +174,7 @@ public class Whiteboard implements WindowManagerCalibratorListener {
             parameters.put(ObjectObserverMoteJ.Parameter.InverseY.toString(), "");
         }
         
-        Whiteboard whiteboard = new Whiteboard();
-        whiteboard.run(parameters);
+        Chopsticks chopsticks = new Chopsticks();
+        chopsticks.run(parameters);
     }
 }

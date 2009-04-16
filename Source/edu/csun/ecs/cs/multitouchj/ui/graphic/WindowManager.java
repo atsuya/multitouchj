@@ -61,6 +61,7 @@ public class WindowManager implements
     private ObjectEventManager objectEventManager;
     private WindowManagerCalibrator windowManagerCalibrator;
     private CalibrationHandler calibrationHandler;
+    private Control backgroundControl;
     
     
     protected WindowManager(
@@ -75,6 +76,7 @@ public class WindowManager implements
         
         setDisplayManager(displayManager);
         setObjectObserver(objectObserver);
+        setBackgroundControl(null);
         
         initialize();
     }
@@ -254,16 +256,40 @@ public class WindowManager implements
         }
     }
     
+    public Control getBackgroundControl() {
+        return backgroundControl;
+    }
+    
+    public void setBackgroundControl(Control control) {
+        synchronized(controls) {
+            backgroundControl = control;
+            
+            if(controls.contains(backgroundControl)) {
+                controls.remove(backgroundControl);
+                controls.addFirst(backgroundControl);
+            }
+        }
+    }
+    
     protected void render() {
         DisplayMode displayMode = displayManager.getCurrentDisplayMode();
         OpenGlUtility.orthoMode(
             new Size(displayMode.getWidth(), displayMode.getHeight())
         );
         
+        renderBackground();
         renderControls();
         renderCursor();
         
         OpenGlUtility.perspectiveMode();
+    }
+    
+    protected void renderBackground() {
+        if(backgroundControl != null) {
+            synchronized(backgroundControl) {
+                renderControl(backgroundControl);
+            }
+        }
     }
 
     protected void renderControls() {
@@ -274,15 +300,8 @@ public class WindowManager implements
         
         synchronized(controls) {
             for(Control control : controls) {
-                if(!cursors.contains(control)) {
-                    GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
-                    GL11.glPushMatrix();
-                    GL11.glLoadIdentity();
-                    
-                    control.render();
-                    
-                    GL11.glPopMatrix();
-                    GL11.glPopAttrib();
+                if((!cursors.contains(control)) && (!control.equals(backgroundControl))) {
+                    renderControl(control);
                 }
             }
         }
@@ -294,16 +313,20 @@ public class WindowManager implements
             
             //log.debug("Cursors: "+cursorHandler.getActiveCursors().size());
             for(Control control : cursorHandler.getActiveCursors()) {
-                GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
-                GL11.glPushMatrix();
-                GL11.glLoadIdentity();
-                
-                control.render();
-                
-                GL11.glPopMatrix();
-                GL11.glPopAttrib();
+                renderControl(control);
             }
         }
+    }
+    
+    protected void renderControl(Control control) {
+        GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
+        GL11.glPushMatrix();
+        GL11.glLoadIdentity();
+        
+        control.render();
+        
+        GL11.glPopMatrix();
+        GL11.glPopAttrib();
     }
     
     protected void setDisplayManager(DisplayManager displayManager) {
@@ -403,12 +426,12 @@ public class WindowManager implements
             
             //log.debug("Ooes: "+ooes.size());
             if(ooes.size() > 0) {
-                //log.debug(control.hashCode()+": Sending "+ooes.size()+" ooes");
+                log.debug(control.hashCode()+": Sending "+ooes.size()+" ooes");
                 control.dispatchEvent(copiedObjectEvent);
             }
         }
         
-        if(activeControl != null) {
+        if((activeControl != null) && (!activeControl.equals(backgroundControl))) {
             if(!activeControl.equals(controls.getLast())) {
                 controls.remove(activeControl);
                 controls.add(activeControl);

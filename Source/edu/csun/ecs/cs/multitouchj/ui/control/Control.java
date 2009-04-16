@@ -128,6 +128,13 @@ public abstract class Control implements Renderable {
         onControlMoved(controlEvent);
     }
     
+    public Point getTopLeftPosition() {
+        return new Point(
+            (center.getX() - (size.getWidth() / 2.0f)),
+            (center.getY() - (size.getHeight() / 2.0f))
+        );
+    }
+    
     public void setTopLeftPosition(Point position) {
         Size size = getSize();
         Point center = new Point(
@@ -226,6 +233,14 @@ public abstract class Control implements Renderable {
         processEvent(event);
     }
     
+    public Point getClientPosition(Point point) {
+        Point topLeft = getTopLeftPosition();
+        return new Point(
+            (point.getX() - topLeft.getX()),
+            (point.getY() - topLeft.getY())
+        );
+    }
+    
     protected WindowManager getWindowManager() {
         return windowManager;
     }
@@ -285,7 +300,7 @@ public abstract class Control implements Renderable {
     }
     
     protected void onTouchMoved(TouchEvent touchEvent) {
-        //log.info("Control.onTouchMoved");
+        log.info("Control.onTouchMoved");
         notifyEventListeners(
             TouchListener.class,
             "touchMoved",
