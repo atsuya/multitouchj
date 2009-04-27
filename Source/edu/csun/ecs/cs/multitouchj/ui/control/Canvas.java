@@ -48,7 +48,7 @@ import edu.csun.ecs.cs.multitouchj.ui.graphic.image.Texture;
  *
  * $Id: Canvas.java 84 2009-03-16 06:52:06Z Atsuya Takagi $
  */
-public abstract class Canvas extends FramedControl {
+public abstract class Canvas extends TouchableControl {
     private static Log log = LogFactory.getLog(Canvas.class);
     protected ResizableBufferedImage resizableBufferedImage;
     

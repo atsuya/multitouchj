@@ -37,7 +37,7 @@ import edu.csun.ecs.cs.multitouchj.ui.utility.PointUtility;
  *
  * $Id: TouchableControl.java 79 2009-03-01 23:36:26Z Atsuya Takagi $
  */
-public abstract class TouchableControl extends Control {
+public class TouchableControl extends FramedControl {
     private static Log log = LogFactory.getLog(TouchableControl.class);
     
     

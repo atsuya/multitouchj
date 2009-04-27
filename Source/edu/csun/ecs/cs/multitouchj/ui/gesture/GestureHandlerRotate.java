@@ -88,22 +88,7 @@ public class GestureHandlerRotate extends GestureHandler {
     private double getAngle(ObjectObserverEvent eventA, ObjectObserverEvent eventB) {
         Point pointA = new Point(eventA.getX(), eventA.getY());
         Point pointB = new Point(eventB.getX(), eventB.getY());
-        float distance = PointUtility.getDistance(pointA, pointB);
-        float deltaX = Math.abs((pointA.getX() - pointB.getX()));
-        double angle = Math.toDegrees(Math.acos((deltaX / distance)));
         
-        /*
-        Point pointWithLargerX = pointA;
-        Point anotherPoint = pointB;
-        if(pointWithLargerX.getX() < anotherPoint.getX()) {
-            pointWithLargerX = pointB;
-            anotherPoint = pointA;
-        }
-        if(pointWithLargerX.getY() > anotherPoint.getY()) {
-            angle = (180.0 - angle);
-        }
-        */
-        
-        return angle;
+        return PointUtility.getAngle(pointA, pointB);
     }
 }

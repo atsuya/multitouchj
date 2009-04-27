@@ -15,6 +15,9 @@
  */
 package edu.csun.ecs.cs.multitouchj.ui.utility;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import edu.csun.ecs.cs.multitouchj.ui.geometry.Point;
 
 /**
@@ -23,6 +26,9 @@ import edu.csun.ecs.cs.multitouchj.ui.geometry.Point;
  * $Id: PointUtility.java 68 2009-02-13 10:34:36Z Atsuya Takagi $
  */
 public class PointUtility {
+    private static Log log = LogFactory.getLog(PointUtility.class);
+    
+    
     protected PointUtility() {
     }
     
@@ -31,5 +37,32 @@ public class PointUtility {
             Math.pow((pointB.getX() - pointA.getX()), 2) + 
             Math.pow((pointB.getY() - pointA.getY()), 2)
         );
+    }
+    
+    /**
+     * Assumes that 0 degree is x-axis. Note that (0,0) is top-left corner!
+     * 
+     * @param pointA
+     * @param pointB
+     * @return
+     */
+    public static float getAngle(Point pointA, Point pointB) {
+        float distance = PointUtility.getDistance(pointA, pointB);
+        float deltaX = Math.abs((pointA.getX() - pointB.getX()));
+        float angle = (float)Math.toDegrees(Math.acos((deltaX / distance)));
+        
+        // determine which of 4 areas it is in
+        Point left = new Point(pointA);
+        Point right = new Point(pointB);
+        if(left.getX() > right.getX()) {
+            left.set(pointB);
+            right.set(pointA);
+        }
+        if(left.getY() < right.getY()) {
+            angle = 360.0f - angle;
+        }
+        
+        
+        return angle;
     }
 }

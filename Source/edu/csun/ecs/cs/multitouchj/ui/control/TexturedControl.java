@@ -34,7 +34,7 @@ import edu.csun.ecs.cs.multitouchj.ui.utility.OpenGlUtility;
  *
  * $Id: TexturedControl.java 80 2009-03-15 07:21:37Z Atsuya Takagi $
  */
-public class TexturedControl extends TouchableControl {
+public class TexturedControl extends Control {
     private static Log log = LogFactory.getLog(TexturedControl.class);
     private TextureManager textureManager;
     private Texture texture;
@@ -126,6 +126,7 @@ public class TexturedControl extends TouchableControl {
         GL11.glEnd();
     }
     
+    /*
     public boolean isWithin(Point position) {
         Texture texture = getTexture();
         if(texture != null) {
@@ -135,6 +136,7 @@ public class TexturedControl extends TouchableControl {
         }
         return false;
     }
+    */
     
     protected TextureManager getTextureManager() {
         return textureManager;

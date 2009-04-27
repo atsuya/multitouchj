@@ -44,6 +44,9 @@ import edu.csun.ecs.cs.multitouchj.utility.FrameMeter;
  * $Id$
  */
 public class Chopsticks implements WindowManagerCalibratorListener {
+    private static final String TITLE = "Chopsticks";
+    private static final String URL_IMAGE_GRABBED =
+        "/edu/csun/ecs/cs/multitouchj/application/chopsticks/resource/Grabbed.png";
     private static Log log = LogFactory.getLog(Chopsticks.class);
     private static final int NUMBER_OF_CONTROLS = 1;
     private boolean isRunning;
@@ -67,7 +70,8 @@ public class Chopsticks implements WindowManagerCalibratorListener {
     public void run(Map<String, String> parameters) {
         DisplayManager.create();
         DisplayManager displayManager = DisplayManager.getInstance();
-        ObjectObserver objectObserver = new ObjectObserverMouse();
+        displayManager.setWindowTitle(TITLE);
+        ObjectObserver objectObserver = new ObjectObserverMoteJ();
         WindowManager windowManager = null;
 
         try {
@@ -120,7 +124,7 @@ public class Chopsticks implements WindowManagerCalibratorListener {
                 }
                 
                 if(frameMeter.update()) {
-                    displayManager.setWindowTitle(frameMeter.getFps()+" fps");
+                    displayManager.setWindowTitle(TITLE+" - "+frameMeter.getFps()+" fps");
                 }
                 updateControls();
                 windowManager.update();
@@ -144,8 +148,9 @@ public class Chopsticks implements WindowManagerCalibratorListener {
     private void loadImages() throws Exception {
         for(int i = 0; i < NUMBER_OF_CONTROLS; i++) {
             GrabbableControl grabbableControl = new GrabbableControl();
-            grabbableControl.setSize(new Size(100.0f, 100.0f));
-            grabbableControl.setPosition(new Point(100.0f, 0.0f));
+            grabbableControl.setTexture(getClass().getResource(URL_IMAGE_GRABBED));
+            grabbableControl.setSize(new Size(150.0f, 150.0f));
+            grabbableControl.setPosition(new Point(350.0f, 0.0f));
             grabbableControls.add(grabbableControl);
         }
     }

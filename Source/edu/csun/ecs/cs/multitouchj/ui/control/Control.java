@@ -198,12 +198,14 @@ public abstract class Control implements Renderable {
         }
         value = (Math.abs(value) % 360.0f);
         
-        log.info("Rotation: "+value);
+        //log.info("Rotation: "+value);
         
         this.rotation = value;
     }
     
     public boolean isWithin(Point position) {
+        //log.debug("isWithin: "+getTopLeftPosition().toString()+", "+getSize().toString());
+        
         boolean result = false;
         if(getRotation() == 0.0f) {
             result = isWithinWithoutRotation(position);
@@ -246,6 +248,8 @@ public abstract class Control implements Renderable {
     }
     
     protected void processEvent(Event event) {
+        //log.debug("processEvent");
+        
         if(isEventInterested(event)) {
             if(event instanceof ObjectEvent) {
                 processObjectEvent((ObjectEvent)event);
@@ -254,6 +258,8 @@ public abstract class Control implements Renderable {
     }
     
     protected void processObjectEvent(ObjectEvent objectEvent) {
+        //log.debug("processObjectEvent");
+        
         ObjectEvent.Status status  = objectEvent.getStatus();
         
         if(objectEvent instanceof TouchEvent) { 
@@ -300,7 +306,7 @@ public abstract class Control implements Renderable {
     }
     
     protected void onTouchMoved(TouchEvent touchEvent) {
-        log.info("Control.onTouchMoved");
+        //log.info("Control.onTouchMoved");
         notifyEventListeners(
             TouchListener.class,
             "touchMoved",
@@ -373,15 +379,17 @@ public abstract class Control implements Renderable {
         Class[] classes,
         Object[] objects
         ) {
-        try {
-            eventListenerManager.notifyEventListeners(
-                klass,
-                methodName,
-                classes,
-                objects
-            );
-        } catch(Exception exception) {
-            log.info("Failed to notify event listeners.", exception);
+        synchronized(eventListenerManager) {
+            try {
+                eventListenerManager.notifyEventListeners(
+                    klass,
+                    methodName,
+                    classes,
+                    objects
+                );
+            } catch(Exception exception) {
+                log.info("Failed to notify event listeners.", exception);
+            }
         }
     }
     

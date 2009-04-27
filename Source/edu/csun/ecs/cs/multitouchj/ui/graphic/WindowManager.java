@@ -399,7 +399,7 @@ public class WindowManager implements
         ListIterator<Control> listIterator = controls.listIterator(controls.size());
         while(listIterator.hasPrevious()) {
             Control control = listIterator.previous();
-            if(cursors.contains(control)) {
+            if((!control.isVisible()) || (cursors.contains(control))) {
                 continue;
             }
             
@@ -426,7 +426,7 @@ public class WindowManager implements
             
             //log.debug("Ooes: "+ooes.size());
             if(ooes.size() > 0) {
-                log.debug(control.hashCode()+": Sending "+ooes.size()+" ooes");
+                log.debug(control.getClass().toString()+"["+control.getPosition().toString()+"]"+": Sending "+ooes.size()+" ooes");
                 control.dispatchEvent(copiedObjectEvent);
             }
         }

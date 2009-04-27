@@ -57,6 +57,7 @@ import edu.csun.ecs.cs.multitouchj.utility.FrameMeter;
  * $Id: Whiteboard.java 85 2009-03-16 07:04:24Z Atsuya Takagi $
  */
 public class Whiteboard implements WindowManagerCalibratorListener {
+    private static final String TITLE = "Whiteboard";
     private static Log log = LogFactory.getLog(Whiteboard.class);
     private static final Object[][] BUTTONS = {
         {
@@ -117,7 +118,8 @@ public class Whiteboard implements WindowManagerCalibratorListener {
     public void run(Map<String, String> parameters) {
         DisplayManager.create();
         DisplayManager displayManager = DisplayManager.getInstance();
-        ObjectObserver objectObserver = new ObjectObserverMouse();
+        displayManager.setWindowTitle(TITLE);
+        ObjectObserver objectObserver = new ObjectObserverMoteJ();
         WindowManager windowManager = null;
 
         try {
@@ -170,7 +172,7 @@ public class Whiteboard implements WindowManagerCalibratorListener {
                 }
                 
                 if(frameMeter.update()) {
-                    displayManager.setWindowTitle(frameMeter.getFps()+" fps");
+                    displayManager.setWindowTitle(TITLE+" - "+frameMeter.getFps()+" fps");
                 }
                 windowManager.update();
                 Thread.sleep(30);

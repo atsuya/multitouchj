@@ -20,6 +20,7 @@ import java.util.List;
 
 import edu.csun.ecs.cs.multitouchj.application.chopsticks.gesture.GestureHandlerGrab;
 import edu.csun.ecs.cs.multitouchj.ui.control.FramedControl;
+import edu.csun.ecs.cs.multitouchj.ui.control.TouchableControl;
 import edu.csun.ecs.cs.multitouchj.ui.gesture.GestureHandler;
 import edu.csun.ecs.cs.multitouchj.ui.gesture.GestureHandlerMove;
 
@@ -28,7 +29,7 @@ import edu.csun.ecs.cs.multitouchj.ui.gesture.GestureHandlerMove;
  *
  * $Id$
  */
-public class GrabbableControl extends FramedControl {
+public class GrabbableControl extends TouchableControl {
     private boolean isGrabbed;
     
     
@@ -48,7 +49,7 @@ public class GrabbableControl extends FramedControl {
     
     protected List<GestureHandler>getGestureHandlers() {
         LinkedList<GestureHandler> gestureHandlers = new LinkedList<GestureHandler>();
-        gestureHandlers.add(new GestureHandlerMove());
+        //gestureHandlers.add(new GestureHandlerMove());
         
         return gestureHandlers;
     }
