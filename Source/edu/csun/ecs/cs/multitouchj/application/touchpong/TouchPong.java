@@ -31,6 +31,7 @@ import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.DisplayMode;
 import org.lwjgl.util.vector.Vector2f;
 
+import edu.csun.ecs.cs.multitouchj.application.touchpong.ui.BounceableControl;
 import edu.csun.ecs.cs.multitouchj.objectobserver.ObjectObserver;
 import edu.csun.ecs.cs.multitouchj.objectobserver.event.ObjectObserverEvent;
 import edu.csun.ecs.cs.multitouchj.objectobserver.motej.ObjectObserverMoteJ;
@@ -65,7 +66,7 @@ public class TouchPong
     private static final int BAR_SIZE = 10;
     private static final int PADDLE_SIZE = 5;
     private static final int BALL_SIZE = 10;
-    private static final float BALL_SPEED = 0.5f;
+    private static final float BALL_SPEED = 1.0f;
     private static final int NUMBER_OF_PADDLES = 2;
     private enum GameState {
         Ready,
@@ -80,18 +81,20 @@ public class TouchPong
     private DisplayMode displayMode;
     private FramedControl backgroundControl;
     private VisualControl middleDotControl;
-    private LinkedList<VisualControl> bounceableControls;
-    private Hashtable<Integer, VisualControl> paddles;
+    private LinkedList<BounceableControl> bounceableControls;
+    private Hashtable<Integer, BounceableControl> paddles;
     private VisualControl ball;
     private GameState gameState;
-    private float ballAngle;
+    private Vector2f ballUnitVector;
+    private BounceableControl bouncedControl;
     
     
     public TouchPong() {
-        bounceableControls = new LinkedList<VisualControl>();
-        paddles = new Hashtable<Integer, VisualControl>();
+        bounceableControls = new LinkedList<BounceableControl>();
+        paddles = new Hashtable<Integer, BounceableControl>();
         
         gameState = null;
+        ballUnitVector = new Vector2f();
     }
     
     /* (non-Javadoc)
@@ -233,14 +236,14 @@ public class TouchPong
         ));
         
         // top bar
-        VisualControl topBar = new VisualControl();
+        BounceableControl topBar = new BounceableControl();
         topBar.setTexture(getClass().getResource(URL_IMAGE_WHITE_RECTANGLE));
         topBar.setSize(new Size(displayMode.getWidth(), BAR_SIZE));
         topBar.setTopLeftPosition(new Point(0, 0));
         bounceableControls.add(topBar);
         
         // bottom bar
-        VisualControl bottomBar = new VisualControl();
+        BounceableControl bottomBar = new BounceableControl();
         bottomBar.setTexture(getClass().getResource(URL_IMAGE_WHITE_RECTANGLE));
         bottomBar.setSize(new Size(displayMode.getWidth(), BAR_SIZE));
         bottomBar.setTopLeftPosition(new Point(0, (displayMode.getHeight() - BAR_SIZE)));
@@ -248,7 +251,7 @@ public class TouchPong
         
         // paddles
         for(int i = 0; i < NUMBER_OF_PADDLES; i++) {
-            VisualControl paddle = new VisualControl();
+            BounceableControl paddle = new BounceableControl();
             paddle.setTexture(getClass().getResource(URL_IMAGE_WHITE_RECTANGLE));
             paddle.setVisible(false);
             paddles.put(i, paddle);
@@ -270,7 +273,7 @@ public class TouchPong
         log.debug("handleTouches: "+touchEvent.getObjectObserverEvents().size()+", "+ended);
         
         if(ended) {
-            for(FramedControl paddle : paddles.values()) {
+            for(BounceableControl paddle : paddles.values()) {
                 paddle.setVisible(false);
             }
         } else { 
@@ -290,12 +293,12 @@ public class TouchPong
                     }
                 }
                 
-                FramedControl paddle = paddles.get(i);
+                BounceableControl paddle = paddles.get(i);
                 if((ooeA != null) && (ooeB != null)) {
                     Point pointA = new Point(ooeA.getX(), ooeA.getY());
                     Point pointB = new Point(ooeB.getX(), ooeB.getY());
                     float distance = PointUtility.getDistance(pointA, pointB);
-                    float angle = PointUtility.getAngle(pointA, pointB);
+                    float angle = PointUtility.getAngle(pointA, pointB, false);
                     Point center = new Point(
                         (pointA.getX() + ((pointB.getX() - pointA.getX()) / 2.0f)),
                         (pointA.getY() + ((pointB.getY() - pointA.getY()) / 2.0f))
@@ -322,8 +325,10 @@ public class TouchPong
         
         Random random = new Random(new Date().getTime());
         //ballAngle = random.nextInt(360);
-        ballAngle = 170.0f;
+        ballUnitVector.set(0.2f, 1.0f);
+        ballUnitVector = ballUnitVector.normalise(null);
         
+        bouncedControl = null;
         gameState = GameState.Start;
     }
     
@@ -333,19 +338,76 @@ public class TouchPong
     
     private void onGameStatePlaying() {
         Point position = ball.getPosition();
-        float deltaX = BALL_SPEED * (float)Math.cos(Math.toRadians(ballAngle));
-        float deltaY = BALL_SPEED * (float)Math.sin(Math.toRadians(ballAngle));
-        position.add(deltaX, deltaY);
+        position.add((BALL_SPEED * ballUnitVector.getX()), -(BALL_SPEED * ballUnitVector.getY()));
         ball.setPosition(position);
         
-        // bars
-        for(VisualControl visualControl : bounceableControls) {
+        log.debug("bars: "+bounceableControls.size());
+        
+        if(bouncedControl != null) {
+            if(!bouncedControl.isHit(ball.getPosition())) {
+                bouncedControl = null;
+            }
+        } else {
+            for(BounceableControl bounceableControl : paddles.values()) {
+                bounceableControls.add(bounceableControl);
+            }
             
+            for(BounceableControl bounceableControl : bounceableControls) {
+                if(bounceBall(bounceableControl)) {
+                    bouncedControl = bounceableControl;
+                    break;
+                }
+            }
+            
+            for(BounceableControl bounceableControl : paddles.values()) {
+                bounceableControls.remove(bounceableControl);
+            }
         }
     }
     
-    private void bounceBall(Control control) {
+    private boolean bounceBall(BounceableControl control) {
+        log.debug("Cheking...");
+        log.debug("\tcontrol: "+control.getPosition().toString()+", ball: "+ball.getPosition().toString());
+        log.debug("\tvector: x="+ballUnitVector.getX()+", y="+ballUnitVector.getY());
         
+        boolean isHit = false;
+        if((control.isVisible()) && (control.isHit(ball.getPosition()))) {
+            log.debug("bounced!!!!!!!!!!!!!!");
+            
+            float angleDelta = 90.0f - control.getRotation();
+            
+            // get current angle of ball vector
+            Point previousBallPosition = new Point(0.0f, 0.0f);
+            Point currentBallPosition = new Point(ballUnitVector.getX(), ballUnitVector.getY());
+            //float ballVectorMagnitude = PointUtility.getDistance(previousBallPosition, currentBallPosition);
+            float currentBallAngle = PointUtility.getAngle(previousBallPosition, currentBallPosition);
+            log.debug("\t\tcurrentBallAngle="+currentBallAngle);
+            
+            // get new vector
+            float targetBallAngle = (currentBallAngle + angleDelta);
+            float newX = (float)Math.cos(Math.toRadians(targetBallAngle));
+            float newY = (float)Math.sin(Math.toRadians(targetBallAngle));
+            log.debug("\t\tnew vector: x="+newX+", y="+newY);
+            newX = (-1 * newX);
+            
+            // back to original angle
+            previousBallPosition.set(0.0f, 0.0f);
+            currentBallPosition.set(newX, newY);
+            log.debug("\t\tnewX="+newX+", newY="+newY);
+            float newAngle = PointUtility.getAngle(previousBallPosition, currentBallPosition);
+            targetBallAngle = (newAngle - angleDelta);
+            log.debug("\t\tnew angle="+newAngle+", targetBallAngle="+targetBallAngle);
+            
+            newX = (float)Math.cos(Math.toRadians(targetBallAngle));
+            newY = (float)Math.sin(Math.toRadians(targetBallAngle));
+            ballUnitVector.set(newX, newY);
+            ballUnitVector = ballUnitVector.normalise(null);
+            log.debug("\t\tfinal: x="+ballUnitVector.getX()+", y="+ballUnitVector.getY());
+            
+            isHit = true;
+        }
+        
+        return isHit;
     }
     
     public static void main(String[] args) {

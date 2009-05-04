@@ -41,15 +41,18 @@ public class PointUtility {
     
     /**
      * Assumes that 0 degree is x-axis. Note that (0,0) is top-left corner!
+     * This is based on regular math x-y coordinate, not the one in multitouchj!
      * 
      * @param pointA
      * @param pointB
      * @return
      */
     public static float getAngle(Point pointA, Point pointB) {
+        /*
         float distance = PointUtility.getDistance(pointA, pointB);
         float deltaX = Math.abs((pointA.getX() - pointB.getX()));
         float angle = (float)Math.toDegrees(Math.acos((deltaX / distance)));
+        log.debug("ok: "+angle);
         
         // determine which of 4 areas it is in
         Point left = new Point(pointA);
@@ -61,7 +64,53 @@ public class PointUtility {
         if(left.getY() < right.getY()) {
             angle = 360.0f - angle;
         }
+        */
+        return getAngle(pointA, pointB, true);
+    }
+    
+    public static float getAngle(Point pointA, Point pointB, boolean isCartesianCoordinateSystem) {
+        Point targetPointA = new Point(pointA);
+        Point targetPointB = new Point(pointB);
+        if(!isCartesianCoordinateSystem) {
+            targetPointA.setY((-1 * targetPointA.getY()));
+            targetPointB.setY((-1 * targetPointB.getY()));
+        }
         
+        Point point = new Point(
+            (targetPointB.getX() - targetPointA.getX()),
+            (targetPointB.getY() - targetPointA.getY())
+        );
+        return getAngle(point, true);
+    }
+    
+    public static float getAngle(Point point) {
+        return getAngle(point, true);
+    }
+    
+    public static float getAngle(Point point, boolean isCartesianCoordinateSystem) {
+        Point targetPoint = new Point(point);
+        if(!isCartesianCoordinateSystem) {
+            targetPoint.setY((-1 * targetPoint.getY()));
+        }
+        
+        Point origin = new Point(0.0f, 0.0f);
+        float distance = PointUtility.getDistance(origin, targetPoint);
+        float deltaX = Math.abs(targetPoint.getX());
+        float angle = (float)Math.toDegrees(Math.acos((deltaX / distance)));
+        
+        if(targetPoint.getX() > 0.0f) {
+            if(targetPoint.getY() > 0.0f) {
+                // nothing to do
+            } else {
+                angle = (360.0f - angle);
+            }
+        } else {
+            if(targetPoint.getY() > 0.0f) {
+                angle = (180.0f - angle);
+            } else {
+                angle = (180.0f + angle);
+            }
+        }
         
         return angle;
     }
