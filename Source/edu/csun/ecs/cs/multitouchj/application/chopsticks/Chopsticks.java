@@ -15,6 +15,7 @@
  */
 package edu.csun.ecs.cs.multitouchj.application.chopsticks;
 
+import java.awt.Color;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.TreeMap;
@@ -26,6 +27,7 @@ import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.DisplayMode;
 
 import edu.csun.ecs.cs.multitouchj.application.chopsticks.ui.GrabbableControl;
+import edu.csun.ecs.cs.multitouchj.application.chopsticks.ui.GrabbableControl.Grabbed;
 import edu.csun.ecs.cs.multitouchj.objectobserver.ObjectObserver;
 import edu.csun.ecs.cs.multitouchj.objectobserver.motej.ObjectObserverMoteJ;
 import edu.csun.ecs.cs.multitouchj.objectobserver.mouse.ObjectObserverMouse;
@@ -45,10 +47,10 @@ import edu.csun.ecs.cs.multitouchj.utility.FrameMeter;
  */
 public class Chopsticks implements WindowManagerCalibratorListener {
     private static final String TITLE = "Chopsticks";
-    private static final String URL_IMAGE_GRABBED =
-        "/edu/csun/ecs/cs/multitouchj/application/chopsticks/resource/Grabbed.png";
     private static Log log = LogFactory.getLog(Chopsticks.class);
     private static final int NUMBER_OF_CONTROLS = 1;
+    private static final float FALL_SPEED_MINIMUM = 0.5f;
+    private static final float FALL_SPEED_MAXIMUM = 2.0f;
     private boolean isRunning;
     private boolean isCalibrated;
     private boolean calibrationRequested;
@@ -148,8 +150,9 @@ public class Chopsticks implements WindowManagerCalibratorListener {
     private void loadImages() throws Exception {
         for(int i = 0; i < NUMBER_OF_CONTROLS; i++) {
             GrabbableControl grabbableControl = new GrabbableControl();
-            grabbableControl.setTexture(getClass().getResource(URL_IMAGE_GRABBED));
-            grabbableControl.setSize(new Size(150.0f, 150.0f));
+            //grabbableControl.setColor(Color.WHITE);
+            //grabbableControl.setTexture(getClass().getResource(Grabbed.LeftBottom.getUri()));
+            grabbableControl.setSize(new Size(100.0f, 100.0f));
             grabbableControl.setPosition(new Point(350.0f, 0.0f));
             grabbableControls.add(grabbableControl);
         }
@@ -159,9 +162,10 @@ public class Chopsticks implements WindowManagerCalibratorListener {
         for(GrabbableControl grabbableControl : grabbableControls) {
             if(!grabbableControl.isGrabbed()) {
                 Point position = grabbableControl.getPosition();
-                position.add(0.0f, 0.1f);
+                position.add(0.0f, FALL_SPEED_MINIMUM);
                 grabbableControl.setPosition(position);
             }
+            grabbableControl.updateGrabbed();
         }
     }
     
