@@ -84,6 +84,18 @@ public class GestureHandlerGrab extends GestureHandler {
             if(grabbed != null) {
                 log.debug("Grabbed: "+grabbed.toString());
                 grabbableControl.setGrabbed(grabbed);
+                
+                // move
+                if(previousOoes.size() == 2) {
+                    ObjectObserverEvent previousOoe1 = previousOoes.get(0);
+                    ObjectObserverEvent previousOoe2 = previousOoes.get(1);
+                    float deltaX = (currentOoe1.getX() - previousOoe1.getX());
+                    float deltaY = (currentOoe1.getY() - previousOoe1.getY());
+                    
+                    Point position = new Point(control.getPosition());
+                    position.add(deltaX, deltaY);
+                    control.setPosition(position);
+                }
             }
         }
         

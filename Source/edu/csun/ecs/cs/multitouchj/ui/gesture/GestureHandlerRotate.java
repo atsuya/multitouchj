@@ -52,10 +52,11 @@ public class GestureHandlerRotate extends GestureHandler {
                 
                 double previousAngle = getAngle(previousOoeA, previousOoeB);
                 double currentAngle = getAngle(currentOoeA, currentOoeB);
-                double angleDelta = Math.abs(currentAngle - previousAngle);
+                double angleDelta = (currentAngle - previousAngle);
                 
                 float angle = control.getRotation();
                 
+                /*
                 ObjectObserverEvent previousAboveOoe = previousOoeA;
                 ObjectObserverEvent previousBelowOoe = previousOoeB;
                 if(previousBelowOoe.getY() < previousAboveOoe.getY()) {
@@ -78,6 +79,7 @@ public class GestureHandlerRotate extends GestureHandler {
                 if(isClockwise) {
                     angleDelta *= -1;
                 }
+                */
                 control.setRotation((control.getRotation() + (float)angleDelta));
                 
                 log.debug("prev: "+previousAngle+", curr: "+currentAngle+", delta: "+angleDelta+", now: "+angle+", after: "+control.getRotation());
@@ -89,6 +91,6 @@ public class GestureHandlerRotate extends GestureHandler {
         Point pointA = new Point(eventA.getX(), eventA.getY());
         Point pointB = new Point(eventB.getX(), eventB.getY());
         
-        return PointUtility.getAngle(pointA, pointB);
+        return PointUtility.getAngle(pointA, pointB, false);
     }
 }

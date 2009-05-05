@@ -18,6 +18,8 @@ package edu.csun.ecs.cs.multitouchj.ui.test;
 import java.awt.Color;
 import java.io.File;
 import java.net.URL;
+import java.util.Date;
+import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Random;
@@ -34,6 +36,7 @@ import edu.csun.ecs.cs.multitouchj.objectobserver.motej.ObjectObserverMoteJ;
 import edu.csun.ecs.cs.multitouchj.objectobserver.mouse.ObjectObserverMouse;
 import edu.csun.ecs.cs.multitouchj.ui.control.FramedControl;
 import edu.csun.ecs.cs.multitouchj.ui.control.TexturedControl;
+import edu.csun.ecs.cs.multitouchj.ui.control.TouchableControl;
 import edu.csun.ecs.cs.multitouchj.ui.event.WindowManagerCalibratorEvent;
 import edu.csun.ecs.cs.multitouchj.ui.event.WindowManagerCalibratorListener;
 import edu.csun.ecs.cs.multitouchj.ui.geometry.Point;
@@ -41,6 +44,7 @@ import edu.csun.ecs.cs.multitouchj.ui.geometry.Size;
 import edu.csun.ecs.cs.multitouchj.ui.graphic.CursorCollectionDefault;
 import edu.csun.ecs.cs.multitouchj.ui.graphic.DisplayManager;
 import edu.csun.ecs.cs.multitouchj.ui.graphic.WindowManager;
+import edu.csun.ecs.cs.multitouchj.ui.graphic.image.Texture;
 import edu.csun.ecs.cs.multitouchj.utility.FrameMeter;
 
 /**
@@ -50,16 +54,25 @@ import edu.csun.ecs.cs.multitouchj.utility.FrameMeter;
  */
 public class PhotoTest implements WindowManagerCalibratorListener {
     private static final String IMAGE_DIRECTORY = "../Resources/PhotoTest";
+    private static final long ANIMATION_TIME = 1000;
     private static Log log = LogFactory.getLog(PhotoTest.class);
     private boolean isRunning;
     private boolean isCalibrated;
     private boolean calibrationRequested;
     private DisplayMode displayMode;
-    private LinkedList<FramedControl> framedControls;
+    private LinkedList<TouchableControl> touchableControls;
+    private Hashtable<TouchableControl, Point> desiredPositions;
+    private Hashtable<TouchableControl, Float> desiredAngles;
+    private Hashtable<TouchableControl, Size> desiredSizes;
+    private long animationTimeStarted;
+    private boolean animationStart;
     
     
     public PhotoTest() {
-        framedControls = new LinkedList<FramedControl>();
+        touchableControls = new LinkedList<TouchableControl>();
+        desiredPositions = new Hashtable<TouchableControl, Point>();
+        desiredAngles = new Hashtable<TouchableControl, Float>();
+        desiredSizes = new Hashtable<TouchableControl, Size>();
     }
     
     /* (non-Javadoc)
@@ -72,7 +85,7 @@ public class PhotoTest implements WindowManagerCalibratorListener {
     public void run(Map<String, String> parameters) {
         DisplayManager.create();
         DisplayManager displayManager = DisplayManager.getInstance();
-        ObjectObserver objectObserver = new ObjectObserverMouse();
+        ObjectObserver objectObserver = new ObjectObserverMoteJ();
         WindowManager windowManager = null;
 
         try {
@@ -104,6 +117,7 @@ public class PhotoTest implements WindowManagerCalibratorListener {
             calibrationRequested = true;
             isCalibrated = false;
             isRunning = true;
+            animationStart = false;
             while(isRunning) {
                 if(Display.isCloseRequested()) {
                     break;
@@ -123,7 +137,8 @@ public class PhotoTest implements WindowManagerCalibratorListener {
                             calibrationRequested = true;
                             break;
                         case Keyboard.KEY_I:
-                            resetPhotos();
+                            //resetPhotos();
+                            initiateAnimation();
                             break;
                     }
                 }
@@ -138,6 +153,12 @@ public class PhotoTest implements WindowManagerCalibratorListener {
                     log.info("Loading images...");
                     loadImages();
                     isCalibrated = false;
+                    
+                    initiateAnimation();
+                }
+                
+                if(animationStart) {
+                    animateControls();
                 }
                 
                 if(frameMeter.update()) {
@@ -162,43 +183,61 @@ public class PhotoTest implements WindowManagerCalibratorListener {
     }
     
     private void loadImages() throws Exception {
-        Random opacityRandom = new Random();
-        Random xRandom = new Random();
-        Random yRandom = new Random();
-        
         File imageDirectory = new File(IMAGE_DIRECTORY);
         for(File file : imageDirectory.listFiles()) {
             if(file.getName().endsWith(".jpg")) {
-                FramedControl panel = new FramedControl();
+                TouchableControl panel = new TouchableControl();
                 panel.setTexture(new URL("file://"+file.getAbsolutePath()));
-                
-                Size size = panel.getSize();
-                panel.setSize(new Size((size.getWidth() / 2.0f), (size.getHeight() / 2.0f)));
-                
-                //float opacity = 0.6f;
-                //opacity += (opacityRandom.nextFloat() * 0.4f);
-                //panel.setOpacity(opacity);
-                
-                float x = xRandom.nextInt(displayMode.getWidth() - 30);
-                float y = yRandom.nextInt(displayMode.getHeight() - 30);
-                panel.setPosition(new Point(x, y));
-                
-                panel.setRotation(60.0f);
                 panel.setMargin(10.0f);
-                
-                framedControls.add(panel);
+                touchableControls.add(panel);
             }
         }
     }
     
-    private void resetPhotos() {
-        for(FramedControl framedControl : framedControls) {
-            framedControl.setPosition(new Point(
-                (displayMode.getWidth() / 2.0f),
-                (displayMode.getHeight() / 2.0f)
-            ));
-            framedControl.setRotation(0.0f);
+    private void animateControls() {
+        long time = new Date().getTime();
+        long timeElapsed = (time - animationTimeStarted);
+        if(timeElapsed >= ANIMATION_TIME) {
+            animationStart = false;
+        } else {
+            for(TouchableControl touchableControl : touchableControls) {
+                float ratio = (timeElapsed / (float)ANIMATION_TIME);
+                
+                Point position = desiredPositions.get(touchableControl);
+                Size size = desiredSizes.get(touchableControl);
+                float angle = desiredAngles.get(touchableControl);
+                touchableControl.setPosition(new Point((position.getX() * ratio), (position.getY() * ratio)));
+                touchableControl.setSize(new Size((size.getWidth() * ratio), (size.getHeight() * ratio)));
+                touchableControl.setRotation((angle * ratio));
+            }
         }
+    }
+    
+    private void initiateAnimation() {
+        desiredPositions.clear();
+        desiredAngles.clear();
+        desiredSizes.clear();
+        
+        Random xRandom = new Random();
+        Random yRandom = new Random();
+        Random angleRandom = new Random();
+        for(TouchableControl touchableControl : touchableControls) {
+            float x = xRandom.nextInt(displayMode.getWidth() - 30);
+            float y = yRandom.nextInt(displayMode.getHeight() - 30);
+            Point position = new Point(x, y);
+            
+            Texture texture = touchableControl.getTexture();
+            Size size = new Size((texture.getImage().getWidth() / 2.0f), (texture.getImage().getHeight() / 2.0f));
+            
+            float angle = (float)angleRandom.nextInt(360);
+            
+            desiredPositions.put(touchableControl, position);
+            desiredAngles.put(touchableControl, angle);
+            desiredSizes.put(touchableControl, size);
+        }
+        
+        animationTimeStarted = new Date().getTime();
+        animationStart = true;
     }
     
     public static void main(String[] args) {

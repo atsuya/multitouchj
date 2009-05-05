@@ -63,11 +63,17 @@ public class TouchPong
         "/edu/csun/ecs/cs/multitouchj/application/touchpong/resource/WhiteRectangle.png";
     private static final String URL_IMAGE_MIDDLE_DOT =
         "/edu/csun/ecs/cs/multitouchj/application/touchpong/resource/MiddleDot.png";
+    private static final String URL_IMAGE_WON =
+        "/edu/csun/ecs/cs/multitouchj/application/touchpong/resource/Won.png";
+    private static final String URL_IMAGE_LOST =
+        "/edu/csun/ecs/cs/multitouchj/application/touchpong/resource/Lost.png";
     private static final int BAR_SIZE = 10;
-    private static final int PADDLE_SIZE = 5;
+    private static final int PADDLE_SIZE = 10;
     private static final int BALL_SIZE = 10;
-    private static final float BALL_SPEED = 1.0f;
+    private static final float BALL_SPEED = 2.0f;
     private static final int NUMBER_OF_PADDLES = 2;
+    private static final int NUMBER_OF_BALL_SHADOWS = 5;
+    private static final int SHADOW_SKIP = 3;
     private enum GameState {
         Ready,
         Start,
@@ -75,6 +81,7 @@ public class TouchPong
         End
     }
     private static Log log = LogFactory.getLog(TouchPong.class);
+    private float ballSpeed = BALL_SPEED;
     private boolean isRunning;
     private boolean isCalibrated;
     private boolean calibrationRequested;
@@ -87,6 +94,11 @@ public class TouchPong
     private GameState gameState;
     private Vector2f ballUnitVector;
     private BounceableControl bouncedControl;
+    private LinkedList<Point> previousBallPositions;
+    private LinkedList<VisualControl> ballShadows;
+    private int shadowCount;
+    private VisualControl wonControl;
+    private VisualControl lostControl;
     
     
     public TouchPong() {
@@ -95,6 +107,8 @@ public class TouchPong
         
         gameState = null;
         ballUnitVector = new Vector2f();
+        previousBallPositions = new LinkedList<Point>();
+        ballShadows = new LinkedList<VisualControl>();
     }
     
     /* (non-Javadoc)
@@ -167,6 +181,12 @@ public class TouchPong
                     if(Keyboard.getEventKey() == Keyboard.KEY_C) {
                         calibrationRequested = true;
                     }
+                    if(Keyboard.getEventKey() == Keyboard.KEY_UP) {
+                        ballSpeed += 0.1f;
+                    }
+                    if(Keyboard.getEventKey() == Keyboard.KEY_DOWN) {
+                        ballSpeed -= 0.1f;
+                    }
                 }
                 
                 if(calibrationRequested) {
@@ -195,6 +215,8 @@ public class TouchPong
                         onGameStateStart();
                     } else if(gameState.equals(GameState.Playing)) {
                         onGameStatePlaying();
+                    } else if(gameState.equals(GameState.End)) {
+                        onGameStateEnd();
                     }
                 }
                 
@@ -249,12 +271,36 @@ public class TouchPong
         bottomBar.setTopLeftPosition(new Point(0, (displayMode.getHeight() - BAR_SIZE)));
         bounceableControls.add(bottomBar);
         
+        // win/lose
+        wonControl = new VisualControl();
+        //wonControl.setColor(Color.BLACK);
+        wonControl.setTexture(getClass().getResource(URL_IMAGE_WON));
+        wonControl.setVisible(false);
+        lostControl = new VisualControl();
+        //lostControl.setColor(Color.BLACK);
+        lostControl.setTexture(getClass().getResource(URL_IMAGE_LOST));
+        lostControl.setVisible(false);
+        
         // paddles
         for(int i = 0; i < NUMBER_OF_PADDLES; i++) {
             BounceableControl paddle = new BounceableControl();
             paddle.setTexture(getClass().getResource(URL_IMAGE_WHITE_RECTANGLE));
             paddle.setVisible(false);
             paddles.put(i, paddle);
+        }
+        
+        // ball shadows
+        for(int i = 0; i < NUMBER_OF_BALL_SHADOWS; i++) {
+            float opacity = (1.0f - ((1.0f / (float)(NUMBER_OF_BALL_SHADOWS + 1)) * (i + 1)));
+            float size = (BALL_SIZE * (NUMBER_OF_BALL_SHADOWS / (float)(NUMBER_OF_BALL_SHADOWS + (i + 1)))); 
+            log.debug("opacity: "+opacity+", size: "+size);
+            
+            VisualControl visualControl = new VisualControl();
+            visualControl.setTexture(getClass().getResource(URL_IMAGE_WHITE_RECTANGLE));
+            visualControl.setSize(new Size(size, size));
+            visualControl.setOpacity(opacity);
+            visualControl.setVisible(false);
+            ballShadows.addLast(visualControl);
         }
         
         // ball
@@ -270,8 +316,15 @@ public class TouchPong
     }
     
     private void handleTouchs(TouchEvent touchEvent, boolean ended) {
-        log.debug("handleTouches: "+touchEvent.getObjectObserverEvents().size()+", "+ended);
+        if(GameState.Ready.equals(gameState)) {
+            gameState = GameState.Start;
+            return;
+        }
+        if(!GameState.Playing.equals(gameState)) {
+            return;
+        }
         
+        //log.debug("handleTouches: "+touchEvent.getObjectObserverEvents().size()+", "+ended);
         if(ended) {
             for(BounceableControl paddle : paddles.values()) {
                 paddle.setVisible(false);
@@ -323,26 +376,67 @@ public class TouchPong
         ball.setVisible(true);
         ball.setPosition(new Point((displayMode.getWidth() / 2.0f), (displayMode.getHeight() / 2.0f)));
         
-        Random random = new Random(new Date().getTime());
-        //ballAngle = random.nextInt(360);
-        ballUnitVector.set(0.2f, 1.0f);
-        ballUnitVector = ballUnitVector.normalise(null);
-        
         bouncedControl = null;
-        gameState = GameState.Start;
+        shadowCount = 0;
+        ballSpeed = BALL_SPEED;
+        previousBallPositions.clear();
+        //gameState = GameState.Start;
+        
+        ball.setVisible(false);
+        for(VisualControl visualControl : ballShadows) {
+            visualControl.setVisible(false);
+        }
     }
     
     private void onGameStateStart() {
+        wonControl.setVisible(false);
+        lostControl.setVisible(false);
+        
+        Random random = new Random(new Date().getTime());
+        float ballAngle = (float)random.nextInt(360);
+        float ballX = (float)Math.cos(Math.toRadians(ballAngle));
+        float ballY = (float)Math.sin(Math.toRadians(ballAngle));
+        if(ballX == 0.0f) {
+            ballX = 0.5f;
+        }
+        if(ballY == 0.0f) {
+            ballY = 0.5f;
+        }
+        
+        log.debug("angle: "+ballAngle+", x: "+ballX+", y: "+ballY);
+        ballUnitVector.set(ballX, ballY);
+        ballUnitVector = ballUnitVector.normalise(null);
+        
         gameState = GameState.Playing;
     }
     
     private void onGameStatePlaying() {
+        // ball
         Point position = ball.getPosition();
-        position.add((BALL_SPEED * ballUnitVector.getX()), -(BALL_SPEED * ballUnitVector.getY()));
+        if(shadowCount >= SHADOW_SKIP) {
+            if(previousBallPositions.size() >= NUMBER_OF_BALL_SHADOWS) {
+                previousBallPositions.removeLast();
+            }
+            previousBallPositions.addFirst(new Point(position));
+            shadowCount = 0;
+        } else {
+            shadowCount += 1;
+        }
+        position.add((ballSpeed * ballUnitVector.getX()), -(ballSpeed * ballUnitVector.getY()));
         ball.setPosition(position);
+        ball.setVisible(true);
         
-        log.debug("bars: "+bounceableControls.size());
+        for(int i = 0; i < NUMBER_OF_BALL_SHADOWS; i++) {
+            VisualControl visualControl = ballShadows.get(i);
+            if(previousBallPositions.size() > i) {
+                visualControl.setPosition(previousBallPositions.get(i));
+                visualControl.setVisible(true);
+            } else {
+                visualControl.setVisible(false);
+            }
+        }
         
+        // bounce
         if(bouncedControl != null) {
             if(!bouncedControl.isHit(ball.getPosition())) {
                 bouncedControl = null;
@@ -363,12 +457,34 @@ public class TouchPong
                 bounceableControls.remove(bounceableControl);
             }
         }
+        
+        // goal
+        if((position.getX() <= 0.0f) || (position.getX() >= (float)displayMode.getWidth())) {
+            gameState = GameState.End;
+        }
+    }
+    
+    private void onGameStateEnd() {
+        Point position = ball.getPosition();
+        if(position.getX() <= 0.0f) {
+            wonControl.setPosition(new Point((displayMode.getWidth() * (3.0f / 4.0f)), (displayMode.getHeight() / 2.0f)));
+            lostControl.setPosition(new Point((displayMode.getWidth() / 4.0f), (displayMode.getHeight() / 2.0f)));
+        } else {
+            wonControl.setPosition(new Point((displayMode.getWidth() / 4.0f), (displayMode.getHeight() / 2.0f)));
+            lostControl.setPosition(new Point((displayMode.getWidth() * (3.0f / 4.0f)), (displayMode.getHeight() / 2.0f)));
+        }
+        wonControl.setVisible(true);
+        lostControl.setVisible(true);
+        
+        gameState = GameState.Ready;
     }
     
     private boolean bounceBall(BounceableControl control) {
+        /*
         log.debug("Cheking...");
         log.debug("\tcontrol: "+control.getPosition().toString()+", ball: "+ball.getPosition().toString());
         log.debug("\tvector: x="+ballUnitVector.getX()+", y="+ballUnitVector.getY());
+        */
         
         boolean isHit = false;
         if((control.isVisible()) && (control.isHit(ball.getPosition()))) {
