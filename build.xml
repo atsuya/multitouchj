@@ -2,11 +2,12 @@
 	<description>
 		MultiTouchJ build configuration
 	</description>
-	<property name="src" location="Source"/>
+	<property name="version" value="0.1.0"/>
+	<property name="src" location="./Source"/>
 	<property name="lib" location="./Library"/>
 	<property name="build" location="./Build"/>
 	<property name="dist" location="./Distribution"/>
-	<property name="jar" value="MultiTouchJ.jar"/>
+	<property name="jar" value="MultiTouchJ-${version}.jar"/>
 
 
 	<target name="init">
