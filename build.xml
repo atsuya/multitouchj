@@ -3,9 +3,9 @@
 		MultiTouchJ build configuration
 	</description>
 	<property name="src" location="Source"/>
-	<property name="lib" location="../Library"/>
-	<property name="build" location="../Build"/>
-	<property name="dist" location="../Distribution"/>
+	<property name="lib" location="./Library"/>
+	<property name="build" location="./Build"/>
+	<property name="dist" location="./Distribution"/>
 	<property name="jar" value="MultiTouchJ.jar"/>
 
 
@@ -17,7 +17,6 @@
 		<mkdir dir="${build}"/>
 	</target>
 
-
 	<target name="compile" depends="init" description="compile all source code">
 		<javac srcdir="${src}" destdir="${build}">
 			<!--
@@ -26,7 +25,7 @@
 			-->
 			<!--<compilerarg value="-Xlint:unchecked"/>-->
 			<include name="**/*.java" />
-			<!--<exclude name="**/test/**/*" />-->
+			<exclude name="**/test/**/*" />
 
 			<classpath>
 				<fileset dir="${lib}">
@@ -43,9 +42,33 @@
                 <include name="**/resource/*" />
             </fileset>
         </copy>
-
 	</target>
 	
+	<target name="compile-test" depends="init, compile" description="compile all source code for test">
+		<javac srcdir="${src}" destdir="${build}">
+			<!--
+				enable this if you want to check type in containers such as
+				LinkedList, Vector, and etc...
+			-->
+			<!--<compilerarg value="-Xlint:unchecked"/>-->
+			<include name="**/test/**/*" />
+
+			<classpath>
+				<fileset dir="${lib}">
+					<include name="*.jar"/>
+				</fileset>
+				<dirset dir="${src}">
+					<include name="**/*"/>
+					<!--<exclude name="**/test/**/*" />-->
+				</dirset>
+			</classpath>
+		</javac>
+		<copy todir="${build}">
+		    <fileset dir="${src}">
+                <include name="**/resource/*" />
+            </fileset>
+        </copy>
+	</target>
 	
 	<target name="jar" depends="compile" description="jar up all class files">
 		<mkdir dir="${dist}"/>
@@ -54,7 +77,6 @@
 			basedir="${build}"
 		/>
 	</target>
-
 
 	<target name="clean" description="clean up">
 		<delete dir="${build}"/>

@@ -1,0 +1,10 @@
+# List of files ignored
+# Ignore Build directory
+Build/
+
+# Ignore Library directory
+Library/
+
+# Ignore Distribution directory
+Distribution/
+

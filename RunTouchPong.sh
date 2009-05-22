@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-libraryPath='../Library'
+libraryPath='./Library'
 
 classPath=''
 for fileName in $(ls $libraryPath); do
@@ -13,6 +13,6 @@ for fileName in $(ls $libraryPath); do
     fi
 done
 
-classPath='../Build:Resources:'$classPath
+classPath='./Build:./Resources:'$classPath
 
 java -cp $classPath -Djava.library.path=$libraryPath -Dbluecove.jsr82.psm_minimum_off=true edu.csun.ecs.cs.multitouchj.application.touchpong.TouchPong $@

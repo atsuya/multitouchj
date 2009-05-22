@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-libraryPath='../Library'
+libraryPath='./Library'
 
 classPath=''
 for fileName in $(ls $libraryPath); do
@@ -13,6 +13,6 @@ for fileName in $(ls $libraryPath); do
     fi
 done
 
-classPath='../Build:'$classPath
+classPath='./Build:'$classPath
 
 java -cp $classPath -Djava.library.path=$libraryPath $@

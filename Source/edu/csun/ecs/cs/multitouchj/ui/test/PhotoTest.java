@@ -66,6 +66,7 @@ public class PhotoTest implements WindowManagerCalibratorListener {
     private Hashtable<TouchableControl, Size> desiredSizes;
     private long animationTimeStarted;
     private boolean animationStart;
+    private String imageDirectory;
     
     
     public PhotoTest() {
