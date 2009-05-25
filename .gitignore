@@ -8,6 +8,6 @@ Library/
 # Ignore Distribution directory
 Distribution/
 
-# Ignore Release directory
-Release/
+# Ignore Releases directory
+Releases/
 
