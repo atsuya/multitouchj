@@ -1,0 +1,1 @@
+java -cp Library\*;Resources -Djava.library.path=Library -Dbluecove.jsr82.psm_minimum_off=true edu.csun.ecs.cs.multitouchj.application.touchpong.TouchPong

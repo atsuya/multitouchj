@@ -1,0 +1,22 @@
+MultiTouchJ
+
+MultiTouchJ is licensed under the Apache License, v. 2.0. Other software
+included in this distribution is provided under other licenses as listed in the
+bottom of this page.
+
+
+Other Software
+
+Following is the list of other software and distributed and utilized by
+MultiTouchJ:
+
+* Lightweight Java Game Library
+* motej
+* BlueCove
+* Commons Logging
+* JOrbis
+* JUnit
+* log4j
+
+Refer to Documentation/ThirdParty for the other software distributed with
+MultiTouchJ.
