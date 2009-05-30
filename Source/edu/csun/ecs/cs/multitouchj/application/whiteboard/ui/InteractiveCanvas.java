@@ -22,6 +22,7 @@ import java.awt.Stroke;
 import java.awt.image.BufferedImage;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Date;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -53,7 +54,9 @@ import edu.csun.ecs.cs.multitouchj.ui.graphic.image.Texture;
  */
 public class InteractiveCanvas extends Canvas {
     private static Log log = LogFactory.getLog(InteractiveCanvas.class);
+    private static final long POINT_CLEAR_DURATION = 200;
     private Hashtable<Integer, LinkedList<Point>> previousPoints;
+    private Hashtable<Integer, Long> previousTimes;
     private Hashtable<Integer, Pen> pens;
     private boolean isDirty;
     
@@ -62,6 +65,7 @@ public class InteractiveCanvas extends Canvas {
         super();
         
         previousPoints = new Hashtable<Integer, LinkedList<Point>>();
+        previousTimes = new Hashtable<Integer, Long>();
         pens = new Hashtable<Integer, Pen>();
         
         setDirty(true);
@@ -85,6 +89,19 @@ public class InteractiveCanvas extends Canvas {
     
     public void setPen(int id, Pen pen) {
         pens.put(id, pen);
+    }
+    
+    public void clearCanvas(Color color) {
+        synchronized(resizableBufferedImage) {
+            BufferedImage bufferedImage = resizableBufferedImage.getBufferedImage();
+            
+            Graphics2D graphics = bufferedImage.createGraphics();
+            graphics.setPaint(color);
+            graphics.fillRect(0, 0, bufferedImage.getWidth(), bufferedImage.getHeight());
+            graphics.dispose();
+            
+            setDirty(true);
+        }
     }
     
     public void render() {
@@ -163,6 +180,18 @@ public class InteractiveCanvas extends Canvas {
     protected void drawPoints() {
         synchronized(previousPoints) {
             synchronized(resizableBufferedImage) {
+                // clear points for pen if it's been long since last changed
+                long currentTime = new Date().getTime();
+                for(int id : pens.keySet()) {
+                    if(previousTimes.containsKey(id)) {
+                        long time = previousTimes.get(id);
+                        if((currentTime - time) > POINT_CLEAR_DURATION) {
+                            previousPoints.remove(id);
+                            previousTimes.remove(id);
+                        }
+                    }
+                }
+                
                 DisplayMode displayMode =
                     getWindowManager().getDisplayManager().getCurrentDisplayMode();
                 BufferedImage bufferedImage = resizableBufferedImage.getBufferedImage();
@@ -212,6 +241,7 @@ public class InteractiveCanvas extends Canvas {
                 
                 points.add(new Point(ooe.getX(), ooe.getY()));
                 previousPoints.put(ooe.getId(), points);
+                previousTimes.put(ooe.getId(), ooe.getTime());
             }
         }
     }
@@ -219,6 +249,7 @@ public class InteractiveCanvas extends Canvas {
     protected void clearPreviousPoints() {
         synchronized(previousPoints) {
             previousPoints.clear();
+            previousTimes.clear();
         }
     }
 }

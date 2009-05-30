@@ -59,7 +59,7 @@ import edu.csun.ecs.cs.multitouchj.utility.FrameMeter;
 public class Whiteboard implements WindowManagerCalibratorListener {
     private static final String TITLE = "Whiteboard";
     private static Log log = LogFactory.getLog(Whiteboard.class);
-    private static final Object[][] BUTTONS = {
+    private static final Object[][] COLOR_BUTTONS = {
         {
             "/edu/csun/ecs/cs/multitouchj/application/whiteboard/resource/Button-Off-Red.png",
             new BasicStroke(5.0f),
@@ -96,8 +96,10 @@ public class Whiteboard implements WindowManagerCalibratorListener {
             new Color(238, 130, 238)
         }
     };
+    private static final String CLEAR_BUTTON =
+        "/edu/csun/ecs/cs/multitouchj/application/whiteboard/resource/Button-Off-Clear.png";
     private static final int NUMBER_OF_PENS = 4;
-    private static final Color DEFAULT_COLOR = Color.BLACK;
+    private static final Color DEFAULT_BACKGROUND_COLOR = Color.WHITE;
     private boolean isRunning;
     private boolean isCalibrated;
     private boolean calibrationRequested;
@@ -197,14 +199,15 @@ public class Whiteboard implements WindowManagerCalibratorListener {
         WindowManager.getInstance().setBackgroundControl(interactiveCanvas);
         interactiveCanvas.setSize(new Size(displayMode.getWidth(), displayMode.getHeight()));
         interactiveCanvas.setTopLeftPosition(new Point(0.0f, 0.0f));
+        clearCanvas();
         
         // pens
         updatePens(new BasicStroke(5.0f), Color.BLACK);
         
-        // buttons
+        // color buttons
         int totalButtonsWidth = 0;
         LinkedList<TexturedControl> buttons = new LinkedList<TexturedControl>();
-        for(Object[] button : BUTTONS) {
+        for(Object[] button : COLOR_BUTTONS) {
             final Stroke stroke = (Stroke)button[1];
             final Color color = (Color)button[2];
             
@@ -226,7 +229,7 @@ public class Whiteboard implements WindowManagerCalibratorListener {
             totalButtonsWidth += texturedControl.getSize().getWidth();
         }
         
-        int numberOfPaddings = BUTTONS.length + 1;
+        int numberOfPaddings = COLOR_BUTTONS.length + 1;
         int padding = (int)Math.floor(
             ((displayMode.getWidth() - totalButtonsWidth) / (double)numberOfPaddings)
         );
@@ -237,6 +240,29 @@ public class Whiteboard implements WindowManagerCalibratorListener {
                 15
             ));
         }
+        
+        // clear button
+        TexturedControl clearButton = new TexturedControl();
+        clearButton.setTexture(getClass().getResource(CLEAR_BUTTON));
+        clearButton.addTouchListener(new TouchListener() {
+            public void touchEnded(TouchEvent touchEvent) {
+            }
+
+            public void touchMoved(TouchEvent touchEvent) {
+            }
+
+            public void touchStarted(TouchEvent touchEvent) {
+                clearCanvas();
+            }
+        });
+        clearButton.setTopLeftPosition(new Point(
+            (displayMode.getWidth() - 10 - clearButton.getSize().getWidth()),
+            (displayMode.getHeight() - 10 - clearButton.getSize().getHeight())
+        ));
+    }
+    
+    private void clearCanvas() {
+        interactiveCanvas.clearCanvas(DEFAULT_BACKGROUND_COLOR);
     }
     
     private void updatePens(Stroke stroke, Color color) {
